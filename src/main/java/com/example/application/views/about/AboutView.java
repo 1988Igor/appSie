@@ -1,6 +1,8 @@
 package com.example.application.views.about;
 
 import com.example.application.data.entity.Components;
+import com.example.application.data.entity.ContactForm;
+import com.example.application.data.service.ComponentsRepository;
 import com.example.application.data.service.ComponentsService;
 import com.example.application.views.MainLayout;
 import com.vaadin.collaborationengine.CollaborationAvatarGroup;
@@ -16,10 +18,14 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.Notification.Position;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.converter.StringToIntegerConverter;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -28,65 +34,91 @@ import com.vaadin.flow.router.RouteAlias;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
 import java.util.Optional;
 import java.util.UUID;
+
+import jakarta.annotation.security.PermitAll;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.stereotype.Component;
+
 
 @PageTitle("About")
+//@Route(value = "", layout = MainLayout.class)
+
+
 @Route(value = "about/:componentsID?/:action?(edit)", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
+@PermitAll
 public class AboutView extends Div implements BeforeEnterObserver {
 
     private final String COMPONENTS_ID = "componentsID";
     private final String COMPONENTS_EDIT_ROUTE_TEMPLATE = "about/%s/edit";
-
+    private final ComponentsRepository componentsRepository;
+    private final ComponentsService componentsService;
     private final Grid<Components> grid = new Grid<>(Components.class, false);
+    TextField filterText = new TextField();
+    //CollaborationAvatarGroup avatarGroup;
 
-    CollaborationAvatarGroup avatarGroup;
-
-    private TextField filtered_products;
+    private TextField filteredProducts;
     private TextField ursprungsland;
+    private TextField statWarennr;
+    private TextField kurztextDeu;
+    private TextField dText1;
+    private TextField kurztextEng;
+    private TextField eText1;
+    private TextField eacRelevanceMilestoneVregsOftWareDien;
+    private TextField atexCertificate;
+    private TextField exMarking;
+    private TextField siosLinkGenerated;
+    private TextField informationFromSiePortalGenerated;
 
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
-
-    private final CollaborationBinder<Components> binder;
-
+    private final Button delete = new Button("Delete");
+    //private final CollaborationBinder<Components> binder;
+    private final BeanValidationBinder<Components> binder;
     private Components components;
+    public ContactForm form;
 
-    private final ComponentsService componentsService;
 
-    public AboutView(ComponentsService componentsService) {
+
+    public AboutView(ComponentsService componentsService, ComponentsRepository componentsRepository) {
         this.componentsService = componentsService;
+        this.componentsRepository = componentsRepository;
         addClassNames("about-view");
 
-        // UserInfo is used by Collaboration Engine and is used to share details
-        // of users to each other to able collaboration. Replace this with
-        // information about the actual user that is logged, providing a user
-        // identifier, and the user's real name. You can also provide the users
-        // avatar by passing an url to the image as a third parameter, or by
-        // configuring an `ImageProvider` to `avatarGroup`.
-        UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "Steve Lange");
 
-        // Create UI
         SplitLayout splitLayout = new SplitLayout();
 
-        avatarGroup = new CollaborationAvatarGroup(userInfo, null);
-        avatarGroup.getStyle().set("visibility", "hidden");
+
 
         createGridLayout(splitLayout);
         createEditorLayout(splitLayout);
-
+        add(getToolbar());
         add(splitLayout);
+        updateList();
 
-        // Configure Grid
-        grid.addColumn("filtered_products").setAutoWidth(true);
+
+        grid.addClassNames("contact-grid");
+        grid.addColumn("filteredProducts").setAutoWidth(true);
         grid.addColumn("ursprungsland").setAutoWidth(true);
+        grid.addColumn("statWarennr").setAutoWidth(true);
+        grid.addColumn("kurztextDeu").setAutoWidth(true);
+        grid.addColumn("dText1").setAutoWidth(true);
+        grid.addColumn("kurztextEng").setAutoWidth(true);
+        grid.addColumn("eText1").setAutoWidth(true);
+        grid.addColumn("eacRelevanceMilestoneVregsOftWareDien").setAutoWidth(true);
+        grid.addColumn("atexCertificate").setAutoWidth(true);
+        grid.addColumn("exMarking").setAutoWidth(true);
+        grid.addColumn("siosLinkGenerated").setAutoWidth(true);
+        grid.addColumn("informationFromSiePortalGenerated").setAutoWidth(true);
+
+
         grid.setItems(query -> componentsService.list(
                 PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
                 .stream());
-        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+        grid.addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
+        grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
 
-        // when a row is selected or deselected, populate form
         grid.asSingleSelect().addValueChangeListener(event -> {
             if (event.getValue() != null) {
                 UI.getCurrent().navigate(String.format(COMPONENTS_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
@@ -96,10 +128,20 @@ public class AboutView extends Div implements BeforeEnterObserver {
             }
         });
 
-        // Configure Form
-        binder = new CollaborationBinder<>(Components.class, userInfo);
+
+       // binder = new CollaborationBinder<>(Components.class);
+        binder = new BeanValidationBinder<>(Components.class);
 
         // Bind fields. This is where you'd define e.g. validation rules
+        // Bind fields. Explicitly define the field type.
+        //binder.forField(ursprungsland).bind(Components::getUrsprungsland, Components::setUrsprungsland);
+        binder.forField(statWarennr).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
+               .bind("statWarennr");
+
+
+
+       // binder.bind(ursprungsland, "ursprungsland");
+        //binder.bind(statWarennr, "statWarennr");
 
         binder.bindInstanceFields(this);
 
@@ -128,6 +170,14 @@ public class AboutView extends Div implements BeforeEnterObserver {
                 Notification.show("Failed to update the data. Check again that all values are valid");
             }
         });
+
+        delete.addClickListener(event ->{
+            deleteComponents(this.components);
+            refreshGrid();
+            Notification.show("Data deleted");
+            UI.getCurrent().navigate(AboutView.class);
+
+        } );
     }
 
     @Override
@@ -157,11 +207,23 @@ public class AboutView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        filtered_products = new TextField("Filtered_products");
+        filteredProducts = new TextField("filteredProducts");
         ursprungsland = new TextField("Ursprungsland");
-        formLayout.add(filtered_products, ursprungsland);
+        statWarennr = new TextField("statWarennr");
+        kurztextDeu = new TextField("kurztextDeu");
+        dText1 = new TextField("dText1");
+        kurztextEng = new TextField("kurztextEng");
+        eText1 = new TextField("eText1");
+        eacRelevanceMilestoneVregsOftWareDien = new TextField("eacRelevanceMilestoneVregsOftWareDien");
+        atexCertificate = new TextField("atexCertificate");
+        exMarking = new TextField("exMarking");
+        siosLinkGenerated = new TextField("siosLinkGenerated");
+        informationFromSiePortalGenerated = new TextField("informationFromSiePortalGenerated");
 
-        editorDiv.add(avatarGroup, formLayout);
+        formLayout.add(filteredProducts, ursprungsland,statWarennr, kurztextDeu, dText1, kurztextEng, eText1,eacRelevanceMilestoneVregsOftWareDien,
+                atexCertificate, exMarking,  siosLinkGenerated, informationFromSiePortalGenerated );
+
+        editorDiv.add(formLayout);
         createButtonLayout(editorLayoutDiv);
 
         splitLayout.addToSecondary(editorLayoutDiv);
@@ -172,7 +234,7 @@ public class AboutView extends Div implements BeforeEnterObserver {
         buttonLayout.setClassName("button-layout");
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        buttonLayout.add(save, cancel);
+        buttonLayout.add(save, cancel,delete);
         editorLayoutDiv.add(buttonLayout);
     }
 
@@ -182,6 +244,7 @@ public class AboutView extends Div implements BeforeEnterObserver {
         splitLayout.addToPrimary(wrapper);
         wrapper.add(grid);
     }
+
 
     private void refreshGrid() {
         grid.select(null);
@@ -194,6 +257,79 @@ public class AboutView extends Div implements BeforeEnterObserver {
 
     private void populateForm(Components value) {
         this.components = value;
+        binder.readBean(this.components);
+
+    }
+
+
+
+    private void deleteComponents(Components components) {
+        componentsRepository.delete(components);
+
+    }
+
+
+    private HorizontalLayout getToolbar() {
+        addClassName("tool-view");
+        filterText.setPlaceholder("Filter by component...");
+        filterText.setClearButtonVisible(true);
+        filterText.setValueChangeMode(ValueChangeMode.LAZY);
+        filterText.addValueChangeListener(e -> updateList());
+
+
+        Button addContactButton = new Button("Add contact");
+        addContactButton.addClickListener(click -> addContact());
+        addContactButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
+                ButtonVariant.LUMO_SUCCESS);
+
+
+        var toolbar = new HorizontalLayout(filterText, addContactButton);
+        toolbar.addClassName("toolbar");
+        toolbar.setVerticalComponentAlignment(FlexComponent.Alignment.END);
+
+
+        return toolbar;
+    }
+
+    private void addContact() {
+        grid.asSingleSelect().clear();
+        editContact(new Components());
+    }
+
+    public void editContact(Components contact) {
+        if (contact == null) {
+            closeEditor();
+        } else {
+            form.setContact(contact);
+            form.setVisible(true);
+            addClassName("editing");
+        }
+    }
+    private void closeEditor() {
+        form.setContact(null);
+        form.setVisible(false);
+        removeClassName("editing");
+    }
+
+    private void updateList() {
+        grid.setItems(componentsService.findAllContacts(filterText.getValue()));
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*private void populateForm(Components value) {
+        this.components = value;
         String topic = null;
         if (this.components != null && this.components.getId() != null) {
             topic = "components/" + this.components.getId();
@@ -204,5 +340,6 @@ public class AboutView extends Div implements BeforeEnterObserver {
         binder.setTopic(topic, () -> this.components);
         avatarGroup.setTopic(topic);
 
-    }
+    }*/
+
 }

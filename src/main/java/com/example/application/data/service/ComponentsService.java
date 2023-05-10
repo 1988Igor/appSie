@@ -1,6 +1,8 @@
 package com.example.application.data.service;
 
 import com.example.application.data.entity.Components;
+
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,4 +42,12 @@ public class ComponentsService {
         return (int) repository.count();
     }
 
+
+    public List<Components> findAllContacts(String filterText){
+        if(filterText == null || filterText.isEmpty()){
+            return  repository.findAll();
+        } else{
+            return repository.search(filterText);
+        }
+    }
 }

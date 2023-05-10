@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Bean;
  */
 @SpringBootApplication
 @Theme(value = "my")
-@Push
+//@Push
 public class Application implements AppShellConfigurator {
 
     public static void main(String[] args) {

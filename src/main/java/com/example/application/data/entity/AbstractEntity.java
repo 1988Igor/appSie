@@ -17,7 +17,8 @@ public abstract class AbstractEntity {
     private Long id;
 
     @Version
-    private int version;
+    private Integer version;
+
 
     public Long getId() {
         return id;
