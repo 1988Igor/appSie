@@ -41,7 +41,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 
-@PageTitle("About")
+@PageTitle("Database")
 //@Route(value = "", layout = MainLayout.class)
 
 
@@ -316,30 +316,5 @@ public class AboutView extends Div implements BeforeEnterObserver {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-    /*private void populateForm(Components value) {
-        this.components = value;
-        String topic = null;
-        if (this.components != null && this.components.getId() != null) {
-            topic = "components/" + this.components.getId();
-            avatarGroup.getStyle().set("visibility", "visible");
-        } else {
-            avatarGroup.getStyle().set("visibility", "hidden");
-        }
-        binder.setTopic(topic, () -> this.components);
-        avatarGroup.setTopic(topic);
-
-    }*/
 
 }
