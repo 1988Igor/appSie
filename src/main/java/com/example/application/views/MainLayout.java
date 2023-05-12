@@ -4,6 +4,7 @@ package com.example.application.views;
 import com.example.application.components.appnav.AppNav;
 import com.example.application.components.appnav.AppNavItem;
 import com.example.application.data.login.SecurityService;
+import com.example.application.views.about.AboutFirma;
 import com.example.application.views.about.AboutView;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
@@ -79,10 +80,13 @@ public class MainLayout extends AppLayout {
         //For documentation, visit https://github.com/vaadin/vcf-nav#readme
         AppNav nav = new AppNav();
 
-        nav.addItem(new AppNavItem("Lists", AboutView.class, LineAwesomeIcon.COLUMNS_SOLID.create()));
+        nav.addItem(new AppNavItem("About us", AboutFirma.class, LineAwesomeIcon.COLUMNS_SOLID.create()));
+        nav.addItem(new AppNavItem("Lists", AboutView.class, LineAwesomeIcon.ADDRESS_BOOK.create()));
 
         return nav;
     }
+
+
 
     private Footer createFooter() {
         Footer layout = new Footer();
