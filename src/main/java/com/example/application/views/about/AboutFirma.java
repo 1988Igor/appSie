@@ -20,14 +20,14 @@ public class AboutFirma extends VerticalLayout {
     public AboutFirma() {
         setSpacing(false);
 
-        Image img = new Image("C:\\Geekbrains\\Block2\\sie\\app\\datapp\\my\\src\\main\\resources\\META-INF\\images\\test.png", "placeholder plant");
-        img.setWidth("200px");
+        Image img = new Image("icons/test2.png", "placeholder plant");
+        img.setWidth("400px");
         add(img);
 
-        H2 header = new H2("This place intentionally left empty");
+        H2 header = new H2("THINK QUALITY – THE GUIDELINE OF OUR ACTION");
         header.addClassNames(Margin.Top.XLARGE, Margin.Bottom.MEDIUM);
         add(header);
-        add(new Paragraph("It’s a place where you can grow your own UI 🤗"));
+        add(new Paragraph("Solutions around quality and safety in plant engineering, operation of assets and critical infrastructures – Think Quality – globally! "));
 
 
         setSizeFull();
