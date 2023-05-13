@@ -14,6 +14,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.Notification.Position;
@@ -25,6 +26,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
@@ -109,8 +111,23 @@ public class AboutView extends Div implements BeforeEnterObserver {
         grid.addColumn("eacRelevanceMilestoneVregsOftWareDien").setAutoWidth(true);
         grid.addColumn("atexCertificate").setAutoWidth(true);
         grid.addColumn("exMarking").setAutoWidth(true);
-        grid.addColumn("siosLinkGenerated").setAutoWidth(true);
-        grid.addColumn("informationFromSiePortalGenerated").setAutoWidth(true);
+        grid.addColumn(new ComponentRenderer<>(item -> {
+            String url = item.getSiosLinkGenerated();
+            Anchor anchor = new Anchor(url, url);
+            anchor.setTarget("_blank"); // Set the link to open in a new tab
+            return anchor;
+        })).setHeader("siosLinkGenerated").setAutoWidth(true);
+
+        //grid.addColumn("siosLinkGenerated").setAutoWidth(true);
+       // grid.addColumn("informationFromSiePortalGenerated").setAutoWidth(true);
+        grid.addColumn(new ComponentRenderer<>(item -> {
+            String url = item.getInformationFromSiePortalGenerated();
+            Anchor anchor = new Anchor(url, url);
+            anchor.setTarget("_blank"); // Set the link to open in a new tab
+            return anchor;
+        })).setHeader("informationFromSiePortalGenerated").setAutoWidth(true);
+
+
 
 
         grid.setItems(query -> componentsService.list(
